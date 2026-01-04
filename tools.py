@@ -1,9 +1,14 @@
 from langchain.tools import tool
 
 @tool
-def say_hi() -> None:
+def say_hi() -> str:
     """Hello World tool that prints 'Hi!' """
-    print("Hi!")
+    return "Hi!"
+
+@tool
+def say_hey() -> str:
+    """Hello World tool that prints 'Hey!' """
+    return "Hey!"
 
 
-TOOLS = []
+TOOLS = [say_hi, say_hey]
