@@ -26,7 +26,7 @@ def create_file(filename: str, file_content: str) -> str:
         }
     )
 
-    if response.get("action") == "approve":
+    if response.get("action").lower() in ["approve", "yes", "y"]:
         filename = response.get("filename", filename)
         with open(filename, "w") as f:
             f.write(file_content)

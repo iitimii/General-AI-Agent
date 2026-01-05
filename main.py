@@ -17,11 +17,11 @@ def main():
                           llm_calls=0)
     config = {"configurable": {"thread_id": "1"}}
     messages = agent.invoke(state, config=config)
+    if "__interrupt__" in messages:
+        interrupt_msg = messages["__interrupt__"][-1].value
+        human_response = input(f"{interrupt_msg['message']}: ")
 
-    # print(messages["__interrupt__"])
-    # action = input(messages["__interrupt__"][0]["value"]["message"]).lower()
-
-    messages = agent.invoke(Command(resume={"action": "approve"}), config=config)
+        messages = agent.invoke(Command(resume={"action": human_response}), config=config)
 
     for m in messages["messages"]:
         m.pretty_print()
