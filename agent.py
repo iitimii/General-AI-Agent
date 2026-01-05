@@ -1,8 +1,10 @@
 import operator
 from typing import Literal
-from typing_extensions import TypedDict, Annotated
+from typing_extensions import TypedDict, Annotated, Literal
 from langgraph.graph import StateGraph, START, END
 from langchain.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+from langgraph.types import Command, interrupt
+from langgraph.checkpoint.memory import InMemorySaver
 
 from llm import model
 from tools import TOOLS
@@ -17,7 +19,7 @@ class MessagesState(TypedDict):
 
 
 # Node
-def llm_call(state: dict):
+def llm_call(state: MessagesState):
     return {
         "messages": [
             model_with_tools.invoke(
@@ -31,8 +33,27 @@ def llm_call(state: dict):
         "llm_calls": state.get("llm_calls", 0) + 1
     }
 
+#could also be
+# def llm_call(state: MessagesState) -> Command[Literal["tool_node", END]]:
+#     state = {
+#         "messages": [
+#             model_with_tools.invoke(
+#                 [
+#                     SystemMessage(
+#                         content="You are a helpful assistant tasked with performing actions required"
+#                     )
+#                 ] + state["messages"]
+#             )
+#         ],
+#         "llm_calls": state.get("llm_calls", 0) + 1
+#     }
 
-def tool_node(state: dict):
+#     next_node = "tool_node" if state["messages"][-1].tool_calls else END
+
+#     return Command(update=state, goto=next_node)
+
+
+def tool_node(state: MessagesState):
     """Performs the tool call"""
 
     result = []
@@ -42,7 +63,7 @@ def tool_node(state: dict):
         result.append(ToolMessage(content=observation, tool_call_id=tool_call["id"]))
     return {"messages": result}
 
-
+# conditional Edge
 def should_continue(state: MessagesState) -> Literal["tool_node", END]:
     """Decide if we should continue the loop or stop based upon whether the LLM made a tool call"""
 
@@ -67,4 +88,5 @@ agent_builder.add_conditional_edges(
 )
 agent_builder.add_edge("tool_node", "llm_call")
 
-agent = agent_builder.compile()
+memory = InMemorySaver()
+agent = agent_builder.compile(checkpointer=memory)
