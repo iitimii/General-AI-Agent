@@ -1,4 +1,5 @@
 from langchain.messages import HumanMessage
+from langgraph.types import Command
 from IPython.display import Image, display
 from agent import agent, MessagesState
 
@@ -16,6 +17,11 @@ def main():
                           llm_calls=0)
     config = {"configurable": {"thread_id": "1"}}
     messages = agent.invoke(state, config=config)
+
+    # print(messages["__interrupt__"])
+    # action = input(messages["__interrupt__"][0]["value"]["message"]).lower()
+
+    messages = agent.invoke(Command(resume={"action": "approve"}), config=config)
 
     for m in messages["messages"]:
         m.pretty_print()
